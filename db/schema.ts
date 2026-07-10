@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   uuid,
@@ -6,6 +7,7 @@ import {
   jsonb,
   integer,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -42,6 +44,27 @@ export const workspaces = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique().on(table.orgId, table.name)],
+);
+
+// Anthropic API key + model config. One org-level default row per org
+// (workspaceId null), plus optional per-workspace override rows. The API
+// key is stored encrypted (see lib/crypto.ts) — only org admins can read or
+// write these, and never in plaintext once saved.
+export const aiSettings = pgTable(
+  "ai_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+    anthropicApiKeyEncrypted: text("anthropic_api_key_encrypted"),
+    model: text("model"),
+    updatedByUserId: uuid("updated_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("ai_settings_org_default_idx").on(table.orgId).where(sql`${table.workspaceId} is null`),
+    uniqueIndex("ai_settings_workspace_idx").on(table.workspaceId).where(sql`${table.workspaceId} is not null`),
+  ],
 );
 
 export const interactions = pgTable("interactions", {

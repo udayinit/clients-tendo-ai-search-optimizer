@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { notFound, redirect } from "next/navigation";
 import { desc, eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db";
@@ -30,6 +31,14 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
   const [org] = await db.select().from(organizations).where(eq(organizations.id, workspace.orgId)).limit(1);
 
+  const { userId: clerkUserId } = await auth();
+  let isAdmin = false;
+  if (clerkUserId && org) {
+    const clerk = await clerkClient();
+    const membershipList = await clerk.users.getOrganizationMembershipList({ userId: clerkUserId });
+    isAdmin = membershipList.data.some((m) => m.organization.id === org.clerkOrgId && m.role === "org:admin");
+  }
+
   const sources = await db.select().from(urlSources).where(eq(urlSources.workspaceId, id)).orderBy(desc(urlSources.createdAt));
 
   type VersionWithSubmitter = typeof urlVersions.$inferSelect & {
@@ -54,8 +63,17 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold">{workspace.name}</h1>
-      <p className="mb-6 text-sm text-gray-500">{org?.name ?? "Unknown org"} workspace</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="mb-1 text-xl font-semibold">{workspace.name}</h1>
+          <p className="text-sm text-gray-500">{org?.name ?? "Unknown org"} workspace</p>
+        </div>
+        {isAdmin && (
+          <Link href={`/workspace/${id}/settings`} className="text-sm text-gray-500 hover:underline">
+            AI settings
+          </Link>
+        )}
+      </div>
 
       <UrlSubmitPanel workspaceId={id} />
 

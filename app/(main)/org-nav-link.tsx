@@ -20,17 +20,12 @@ export function OrgNavLink() {
         Workspaces
       </Link>
       {orgRole === "org:admin" && (
-        <>
-          <Link href={`/org/${orgId}/settings`} className="text-sm text-gray-500 hover:underline">
-            Settings
-          </Link>
-          <Link
-            href={`/org/${orgId}/workspaces/new`}
-            className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-gray-800"
-          >
-            Create workspace
-          </Link>
-        </>
+        <Link
+          href={`/org/${orgId}/workspaces/new`}
+          className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-gray-800"
+        >
+          Create workspace
+        </Link>
       )}
     </div>
   );

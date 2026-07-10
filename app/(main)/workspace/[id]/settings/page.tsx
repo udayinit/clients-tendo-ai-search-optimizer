@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { organizations, workspaces } from "@/db/schema";
 import { getOrgAiSettingsDisplay, getWorkspaceAiSettingsDisplay } from "@/lib/ai-settings";
 import { WorkspaceAiSettingsForm } from "./ai-settings-form";
+import { AiSettingsForm } from "@/app/(main)/org/[orgId]/settings/ai-settings-form";
 
 export default async function WorkspaceSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: workspaceId } = await params;
@@ -29,16 +30,30 @@ export default async function WorkspaceSettingsPage({ params }: { params: Promis
   ]);
 
   return (
-    <div>
-      <h1 className="mb-1 text-xl font-semibold">{workspace.name} — AI settings</h1>
-      <p className="mb-6 text-sm text-gray-500">Override the org's default API key and model for this workspace only.</p>
-      <WorkspaceAiSettingsForm
-        workspaceId={workspace.id}
-        hasOverride={workspaceDisplay.hasKey}
-        maskedKey={workspaceDisplay.maskedKey}
-        model={workspaceDisplay.model}
-        orgModel={orgDisplay.model}
-      />
+    <div className="space-y-8">
+      <div>
+        <h1 className="mb-1 text-xl font-semibold">{workspace.name} — AI settings</h1>
+        <p className="text-sm text-gray-500">Manage the AI key used for analysis in this workspace, and the org-wide default.</p>
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">This workspace's override</h2>
+        <WorkspaceAiSettingsForm
+          workspaceId={workspace.id}
+          hasOverride={workspaceDisplay.hasKey}
+          maskedKey={workspaceDisplay.maskedKey}
+          model={workspaceDisplay.model}
+          orgModel={orgDisplay.model}
+        />
+      </div>
+
+      <div>
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
+          Organization default ({org.name})
+        </h2>
+        <p className="mb-2 text-sm text-gray-500">Used by every workspace in this org that doesn't have its own override.</p>
+        <AiSettingsForm clerkOrgId={org.clerkOrgId} hasKey={orgDisplay.hasKey} maskedKey={orgDisplay.maskedKey} model={orgDisplay.model} />
+      </div>
     </div>
   );
 }

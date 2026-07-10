@@ -10,7 +10,9 @@ import { VersionActions } from "./version-actions";
 import { ResultView } from "./result-view";
 
 function isAnalysisResult(data: unknown): data is AnalysisResult {
-  return !!data && typeof data === "object" && typeof (data as { score?: unknown }).score === "number";
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return "title" in d || "score" in d || "optimized" in d;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,6 +22,12 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Completed",
   rejected: "Rejected",
   failed: "Failed",
+};
+
+const STAGE_LABEL: Record<string, string> = {
+  entity: "topic identification",
+  benchmark_score: "benchmark & scoring",
+  rewrite: "rewrite generation",
 };
 
 export default async function VersionDetailPage({
@@ -69,7 +77,11 @@ export default async function VersionDetailPage({
       </h1>
 
       <div className="mb-5 space-y-0.5 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
-        <div>Status: {STATUS_LABEL[version.status] ?? version.status}</div>
+        <div>
+          Status: {STATUS_LABEL[version.status] ?? version.status}
+          {(version.status === "pending_approval" || version.status === "extracting") &&
+            ` (${STAGE_LABEL[version.currentStage] ?? version.currentStage})`}
+        </div>
         <div>
           Submitted by {row.submittedByName ?? row.submittedByEmail ?? "Unknown user"} on{" "}
           {version.createdAt.toLocaleString()}
@@ -85,7 +97,7 @@ export default async function VersionDetailPage({
         )}
       </div>
 
-      {version.status === "pending_approval" && <VersionActions versionId={version.id} />}
+      {version.status === "pending_approval" && <VersionActions versionId={version.id} currentStage={version.currentStage} />}
 
       {isAnalysisResult(version.extractedData) ? (
         <ResultView data={version.extractedData} />

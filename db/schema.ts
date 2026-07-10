@@ -91,9 +91,13 @@ export const urlSources = pgTable(
   (table) => [unique().on(table.workspaceId, table.url)],
 );
 
-// One row per scrape/analysis run for a source. `status` tracks progress
-// through the pipeline, including the mid-pipeline human-approval gate
-// between the raw scrape and the AI extraction stage.
+// One row per scrape/analysis run for a source. The pipeline has 4 stages,
+// each gated by its own human approval: scrape -> entity -> benchmark_score
+// -> rewrite. `status` tracks the state of `currentStage`:
+//   pending_approval — waiting for a human to approve running currentStage
+//   extracting       — currentStage is actively running
+// When a stage completes, its output is merged into extractedData and
+// currentStage advances (or status becomes 'completed' after rewrite).
 export const urlVersions = pgTable("url_versions", {
   id: uuid("id").primaryKey().defaultRandom(),
   sourceId: uuid("source_id").notNull().references(() => urlSources.id, { onDelete: "cascade" }),
@@ -102,6 +106,9 @@ export const urlVersions = pgTable("url_versions", {
   status: text("status", {
     enum: ["scraping", "pending_approval", "rejected", "extracting", "completed", "failed"],
   }).notNull().default("scraping"),
+  currentStage: text("current_stage", {
+    enum: ["entity", "benchmark_score", "rewrite"],
+  }).notNull().default("entity"),
   rawContent: text("raw_content"),
   extractedData: jsonb("extracted_data"),
   errorMessage: text("error_message"),

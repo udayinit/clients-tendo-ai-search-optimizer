@@ -46,6 +46,17 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+function PendingRing() {
+  return (
+    <svg width="88" height="88" viewBox="0 0 88 88">
+      <circle cx={44} cy={44} r={36} fill="none" stroke="var(--color-separator)" strokeWidth={8} strokeDasharray="4 6" />
+      <text x={44} y={50} textAnchor="middle" fontSize="11" fill="var(--color-tertiary-label)">
+        pending
+      </text>
+    </svg>
+  );
+}
+
 function GapCard({ gap, i }: { gap: { issue: string; recommendation: string }; i: number }) {
   const badgeClass = ["hig-badge-red", "hig-badge-orange", "hig-badge-blue"];
   const labels = ["High impact", "Medium impact", "Low impact"];
@@ -156,27 +167,37 @@ function renderMarkdown(text: string) {
 }
 
 export function ResultView({ data }: { data: AnalysisResult }) {
-  const [tab, setTab] = useState(0);
+  const availableTabs = TABS.filter((_, i) => {
+    if (i === 0) return !!data.summary;
+    if (i === 1) return !!data.benchmark;
+    if (i === 2) return !!data.gaps;
+    return !!data.optimized;
+  });
+
+  const [tabLabel, setTabLabel] = useState<string | undefined>(availableTabs[0]);
   const [copied, setCopied] = useState(false);
+  const tab = TABS.indexOf(tabLabel && availableTabs.includes(tabLabel) ? tabLabel : (availableTabs[0] ?? TABS[0]));
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap gap-3">
         <div className="hig-card flex flex-none items-center gap-4 px-5 py-4">
-          <ScoreRing score={data.score} />
+          {data.score !== undefined ? <ScoreRing score={data.score} /> : <PendingRing />}
           <div>
             <p className="m-0 text-xs" style={{ color: "var(--color-secondary-label)" }}>
               AI search score
             </p>
-            <p className="m-0 mb-1 mt-0.5 text-[14px] font-medium">{data.title}</p>
+            <p className="m-0 mb-1 mt-0.5 text-[14px] font-medium">{data.title ?? "Waiting on entity stage..."}</p>
             {data.target_query && (
               <p className="m-0 mb-1 text-[11px]" style={{ color: "var(--color-tertiary-label)" }}>
                 Benchmarked against: &quot;{data.target_query}&quot;
               </p>
             )}
-            <p className="m-0 text-[11px]" style={{ color: "var(--color-tertiary-label)" }}>
-              {data.score >= 75 ? "AI-ready" : data.score >= 50 ? "Partially optimized" : "Poor AI visibility"}
-            </p>
+            {data.score !== undefined && (
+              <p className="m-0 text-[11px]" style={{ color: "var(--color-tertiary-label)" }}>
+                {data.score >= 75 ? "AI-ready" : data.score >= 50 ? "Partially optimized" : "Poor AI visibility"}
+              </p>
+            )}
           </div>
         </div>
         {data.score_breakdown && (
@@ -185,7 +206,7 @@ export function ResultView({ data }: { data: AnalysisResult }) {
               AI visibility breakdown
             </p>
             {AI_DIMS.map(({ key, label }) => {
-              const v = data.score_breakdown[key] ?? 0;
+              const v = data.score_breakdown?.[key] ?? 0;
               return (
                 <div key={key} className="mb-1.5">
                   <div className="mb-0.5 flex justify-between">
@@ -204,15 +225,17 @@ export function ResultView({ data }: { data: AnalysisResult }) {
         )}
       </div>
 
-      <div className="hig-segmented mb-6 w-fit overflow-x-auto">
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)} data-active={tab === i} className="hig-segmented-item">
-            {t}
-          </button>
-        ))}
-      </div>
+      {availableTabs.length > 0 && (
+        <div className="hig-segmented mb-6 w-fit overflow-x-auto">
+          {availableTabs.map((t) => (
+            <button key={t} onClick={() => setTabLabel(t)} data-active={tabLabel === t} className="hig-segmented-item">
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {tab === 0 && <p className="m-0 text-[15px] leading-loose">{data.summary}</p>}
+      {tab === 0 && data.summary && <p className="m-0 text-[15px] leading-loose">{data.summary}</p>}
 
       {tab === 1 && data.benchmark && (
         <div>
@@ -271,18 +294,18 @@ export function ResultView({ data }: { data: AnalysisResult }) {
         </div>
       )}
 
-      {tab === 2 && (
+      {tab === 2 && data.gaps && (
         <div>
           <p className="mb-4 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
-            {data.gaps?.length} gaps identified — grounded in benchmark findings.
+            {data.gaps.length} gaps identified — grounded in benchmark findings.
           </p>
-          {data.gaps?.map((gap, i) => (
+          {data.gaps.map((gap, i) => (
             <GapCard key={i} gap={gap} i={i} />
           ))}
         </div>
       )}
 
-      {tab === 3 && (
+      {tab === 3 && data.optimized && (
         <div>
           {data.stat_warning && (
             <div className="mb-3 flex items-start gap-2.5 rounded-md px-4 py-3" style={{ background: "var(--color-tint-orange-bg)" }}>
@@ -299,7 +322,7 @@ export function ResultView({ data }: { data: AnalysisResult }) {
             </p>
             <button
               onClick={() => {
-                navigator.clipboard.writeText(data.optimized);
+                navigator.clipboard.writeText(data.optimized ?? "");
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}

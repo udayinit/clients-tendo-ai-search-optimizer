@@ -4,13 +4,27 @@ import { urlSources, urlVersions, workspaces } from "@/db/schema";
 import { canAccessWorkspace } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { getEffectiveAiSettings } from "@/lib/ai-settings";
-import { runAiAnalysis, type AnalysisStage } from "@/lib/anthropic";
+import {
+  runBenchmarkScoreStage,
+  runEntityStage,
+  runRewriteStage,
+  type AnalysisResult,
+  type BenchmarkScoreResult,
+  type EntityResult,
+  type PipelineStage,
+  type RewriteResult,
+} from "@/lib/anthropic";
 
-const STAGE_LABEL: Record<AnalysisStage, string> = {
-  analyzing: "Analyzing page content",
-  benchmarking: "Benchmarking against live AI search results",
-  comparing: "Comparing page against benchmark",
-  rewriting: "Generating optimized rewrite",
+const NEXT_STAGE: Record<PipelineStage, PipelineStage | null> = {
+  entity: "benchmark_score",
+  benchmark_score: "rewrite",
+  rewrite: null,
+};
+
+const STAGE_APPROVE_LABEL: Record<PipelineStage, string> = {
+  entity: "Identifying the target topic and query",
+  benchmark_score: "Benchmarking against live AI search and scoring",
+  rewrite: "Generating the optimized rewrite",
 };
 
 function sseEncode(event: Record<string, unknown>) {
@@ -52,6 +66,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ versio
     );
   }
 
+  const stage = version.currentStage;
+  const existingData = (version.extractedData as AnalysisResult | null) ?? {};
+
   await db
     .update(urlVersions)
     .set({ status: "extracting", approvedByUserId: user.id, approvedAt: new Date() })
@@ -61,18 +78,61 @@ export async function POST(_req: Request, { params }: { params: Promise<{ versio
     async start(controller) {
       const send = (event: Record<string, unknown>) => controller.enqueue(new TextEncoder().encode(sseEncode(event)));
 
+      send({ type: "status", label: STAGE_APPROVE_LABEL[stage] });
+
       try {
-        const result = await runAiAnalysis({
-          apiKey: aiSettings.apiKey,
-          model: aiSettings.model,
-          url: source.url,
-          rawContent: version.rawContent ?? "",
-          onProgress: (stage) => send({ type: "status", stage, label: STAGE_LABEL[stage] }),
-        });
+        let stageResult: EntityResult | BenchmarkScoreResult | RewriteResult;
 
-        await db.update(urlVersions).set({ status: "completed", extractedData: result }).where(eq(urlVersions.id, versionId));
+        if (stage === "entity") {
+          stageResult = await runEntityStage({
+            apiKey: aiSettings.apiKey,
+            model: aiSettings.model,
+            url: source.url,
+            rawContent: version.rawContent ?? "",
+            onProgress: (label) => send({ type: "status", label }),
+          });
+        } else if (stage === "benchmark_score") {
+          if (!existingData.target_query) {
+            throw new Error("Missing entity stage output — cannot run benchmark/score yet");
+          }
+          stageResult = await runBenchmarkScoreStage({
+            apiKey: aiSettings.apiKey,
+            model: aiSettings.model,
+            url: source.url,
+            rawContent: version.rawContent ?? "",
+            entity: existingData as Required<Pick<AnalysisResult, "title" | "target_query" | "summary">>,
+            onProgress: (label) => send({ type: "status", label }),
+          });
+        } else {
+          if (!existingData.target_query || !existingData.benchmark) {
+            throw new Error("Missing prior stage output — cannot run rewrite yet");
+          }
+          stageResult = await runRewriteStage({
+            apiKey: aiSettings.apiKey,
+            model: aiSettings.model,
+            url: source.url,
+            rawContent: version.rawContent ?? "",
+            entity: existingData as Required<Pick<AnalysisResult, "title" | "target_query" | "summary">>,
+            benchmarkScore: existingData as Required<
+              Pick<AnalysisResult, "score" | "score_breakdown" | "benchmark" | "gaps" | "stat_warning">
+            >,
+            onProgress: (label) => send({ type: "status", label }),
+          });
+        }
 
-        send({ type: "result", status: "completed", data: result });
+        const merged: AnalysisResult = { ...existingData, ...stageResult };
+        const nextStage = NEXT_STAGE[stage];
+
+        await db
+          .update(urlVersions)
+          .set({
+            extractedData: merged,
+            status: nextStage ? "pending_approval" : "completed",
+            currentStage: nextStage ?? stage,
+          })
+          .where(eq(urlVersions.id, versionId));
+
+        send({ type: "result", status: nextStage ? "pending_approval" : "completed", nextStage, data: merged });
       } catch (err) {
         const message = err instanceof Error ? err.message : "AI analysis failed";
         await db.update(urlVersions).set({ status: "failed", errorMessage: message }).where(eq(urlVersions.id, versionId));

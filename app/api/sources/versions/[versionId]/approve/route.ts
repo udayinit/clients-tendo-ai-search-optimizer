@@ -1,8 +1,21 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { urlSources, urlVersions } from "@/db/schema";
+import { urlSources, urlVersions, workspaces } from "@/db/schema";
 import { canAccessWorkspace } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
+import { getEffectiveAiSettings } from "@/lib/ai-settings";
+import { runAiAnalysis, type AnalysisStage } from "@/lib/anthropic";
+
+const STAGE_LABEL: Record<AnalysisStage, string> = {
+  analyzing: "Analyzing page content",
+  benchmarking: "Benchmarking against live AI search results",
+  comparing: "Comparing page against benchmark",
+  rewriting: "Generating optimized rewrite",
+};
+
+function sseEncode(event: Record<string, unknown>) {
+  return `data: ${JSON.stringify(event)}\n\n`;
+}
 
 export async function POST(_req: Request, { params }: { params: Promise<{ versionId: string }> }) {
   const { versionId } = await params;
@@ -26,20 +39,55 @@ export async function POST(_req: Request, { params }: { params: Promise<{ versio
     return new Response(JSON.stringify({ error: `Version is '${version.status}', not awaiting approval` }), { status: 409 });
   }
 
-  // AI extraction stage isn't wired up yet (no LLM provider configured).
-  // Mark the version completed on the raw scraped content so the pipeline
-  // isn't blocked; swap this for a real extraction call once a provider key
-  // is available.
-  const [updated] = await db
-    .update(urlVersions)
-    .set({
-      status: "completed",
-      approvedByUserId: user.id,
-      approvedAt: new Date(),
-      extractedData: { note: "AI extraction not yet configured; showing raw scraped content." },
-    })
-    .where(eq(urlVersions.id, versionId))
-    .returning();
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, source.workspaceId)).limit(1);
+  if (!workspace) {
+    return new Response(JSON.stringify({ error: "Workspace not found" }), { status: 404 });
+  }
 
-  return Response.json({ version: updated });
+  const aiSettings = await getEffectiveAiSettings(workspace.orgId, workspace.id);
+  if (!aiSettings) {
+    return new Response(
+      JSON.stringify({ error: "AI analysis isn't configured for this workspace. Ask an org admin to add an API key in AI settings." }),
+      { status: 400 },
+    );
+  }
+
+  await db
+    .update(urlVersions)
+    .set({ status: "extracting", approvedByUserId: user.id, approvedAt: new Date() })
+    .where(eq(urlVersions.id, versionId));
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (event: Record<string, unknown>) => controller.enqueue(new TextEncoder().encode(sseEncode(event)));
+
+      try {
+        const result = await runAiAnalysis({
+          apiKey: aiSettings.apiKey,
+          model: aiSettings.model,
+          url: source.url,
+          rawContent: version.rawContent ?? "",
+          onProgress: (stage) => send({ type: "status", stage, label: STAGE_LABEL[stage] }),
+        });
+
+        await db.update(urlVersions).set({ status: "completed", extractedData: result }).where(eq(urlVersions.id, versionId));
+
+        send({ type: "result", status: "completed", data: result });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "AI analysis failed";
+        await db.update(urlVersions).set({ status: "failed", errorMessage: message }).where(eq(urlVersions.id, versionId));
+        send({ type: "error", message });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type ScrapeResult = {
@@ -75,23 +76,6 @@ export function UrlSubmitPanel({ workspaceId }: { workspaceId: string }) {
     }
   }
 
-  async function approve(versionId: string) {
-    setActionPending(true);
-    try {
-      const res = await fetch(`/api/sources/versions/${versionId}/approve`, { method: "POST" });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setState({ stage: "error", message: body.error ?? "Approve failed" });
-        return;
-      }
-      setState({ stage: "idle" });
-      setUrl("");
-      router.refresh();
-    } finally {
-      setActionPending(false);
-    }
-  }
-
   async function reject(versionId: string) {
     setActionPending(true);
     try {
@@ -141,13 +125,12 @@ export function UrlSubmitPanel({ workspaceId }: { workspaceId: string }) {
             {state.result.text.slice(0, 2000)}
           </p>
           <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => approve(state.result.versionId)}
-              disabled={actionPending}
-              className="rounded bg-gray-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
+            <Link
+              href={`/workspace/${workspaceId}/versions/${state.result.versionId}`}
+              className="rounded bg-gray-900 px-3 py-1.5 text-xs text-white"
             >
-              Approve
-            </button>
+              Review & approve →
+            </Link>
             <button
               onClick={() => reject(state.result.versionId)}
               disabled={actionPending}

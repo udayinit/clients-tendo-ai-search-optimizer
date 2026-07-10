@@ -99,7 +99,6 @@ export async function runAiAnalysis({
     body: JSON.stringify({
       model,
       max_tokens: 8000,
-      temperature: 0,
       stream: true,
       tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 5 }],
       messages: [{ role: "user", content: buildPrompt(url, rawContent) }],

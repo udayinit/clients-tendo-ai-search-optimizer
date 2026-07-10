@@ -5,7 +5,13 @@ import { db } from "@/db";
 import { urlSources, urlVersions, users } from "@/db/schema";
 import { canAccessWorkspace } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
+import type { AnalysisResult } from "@/lib/anthropic";
 import { VersionActions } from "./version-actions";
+import { ResultView } from "./result-view";
+
+function isAnalysisResult(data: unknown): data is AnalysisResult {
+  return !!data && typeof data === "object" && typeof (data as { score?: unknown }).score === "number";
+}
 
 const STATUS_LABEL: Record<string, string> = {
   scraping: "Scraping...",
@@ -79,18 +85,24 @@ export default async function VersionDetailPage({
 
       {version.status === "pending_approval" && <VersionActions versionId={version.id} />}
 
-      {version.extractedData !== null && (
-        <div className="mb-4 rounded border bg-white p-3">
-          <div className="mb-1 text-xs font-medium uppercase text-gray-400">Extracted data</div>
-          <pre className="whitespace-pre-wrap text-xs text-gray-700">{JSON.stringify(version.extractedData, null, 2)}</pre>
-        </div>
-      )}
+      {isAnalysisResult(version.extractedData) ? (
+        <ResultView data={version.extractedData} />
+      ) : (
+        <>
+          {version.extractedData !== null && (
+            <div className="mb-4 rounded border bg-white p-3">
+              <div className="mb-1 text-xs font-medium uppercase text-gray-400">Extracted data</div>
+              <pre className="whitespace-pre-wrap text-xs text-gray-700">{JSON.stringify(version.extractedData, null, 2)}</pre>
+            </div>
+          )}
 
-      {version.rawContent && (
-        <div className="rounded border bg-white p-3">
-          <div className="mb-1 text-xs font-medium uppercase text-gray-400">Raw scraped content</div>
-          <p className="whitespace-pre-wrap text-sm text-gray-700">{version.rawContent}</p>
-        </div>
+          {version.rawContent && (
+            <div className="rounded border bg-white p-3">
+              <div className="mb-1 text-xs font-medium uppercase text-gray-400">Raw scraped content</div>
+              <p className="whitespace-pre-wrap text-sm text-gray-700">{version.rawContent}</p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,6 +1,21 @@
-import { CreateOrganization } from "@clerk/nextjs";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth, CreateOrganization } from "@clerk/nextjs";
 
 export default function OnboardingPage() {
+  const { orgId, isLoaded } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && orgId) {
+      router.replace(`/org/${orgId}/workspaces`);
+    }
+  }, [isLoaded, orgId, router]);
+
+  if (!isLoaded || orgId) return null;
+
   return (
     <div className="flex flex-col items-center gap-4 pt-12 text-center">
       <h1 className="text-xl font-semibold">Create or join an organization to get started</h1>

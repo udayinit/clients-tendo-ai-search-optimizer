@@ -1,11 +1,11 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
 import { users } from "@/db/schema";
 
 export default async function Home() {
-  const { userId: clerkUserId, orgId } = await auth();
+  const { userId: clerkUserId } = await auth();
   if (!clerkUserId) {
     redirect("/sign-in");
   }
@@ -28,9 +28,16 @@ export default async function Home() {
     await db.insert(users).values({ clerkUserId, email, name }).onConflictDoNothing({ target: users.clerkUserId });
   }
 
-  // Every workspace belongs to an org now, so route by the user's active org.
-  if (orgId) {
-    redirect(`/org/${orgId}/workspaces`);
+  // Every workspace belongs to an org now, so route by org membership. Query
+  // live rather than trusting the session's "active org" claim, which can
+  // lag right after sign-in and would otherwise wrongly bounce a real member
+  // to /onboarding.
+  const clerk = await clerkClient();
+  const membershipList = await clerk.users.getOrganizationMembershipList({ userId: clerkUserId });
+  const firstMembership = membershipList.data[0];
+
+  if (firstMembership) {
+    redirect(`/org/${firstMembership.organization.id}/workspaces`);
   }
 
   redirect("/onboarding");

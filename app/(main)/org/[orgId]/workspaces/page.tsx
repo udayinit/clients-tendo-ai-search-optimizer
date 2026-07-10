@@ -9,18 +9,24 @@ import { CreateWorkspaceForm } from "./create-workspace-form";
 export default async function OrgWorkspacesPage({ params }: { params: Promise<{ orgId: string }> }) {
   const { orgId: clerkOrgId } = await params;
 
-  const { orgId: activeClerkOrgId, orgRole } = await auth();
-  if (!activeClerkOrgId) redirect("/sign-in");
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) redirect("/sign-in");
 
-  // Only show workspaces for the org the user currently has active in their session.
-  if (activeClerkOrgId !== clerkOrgId) notFound();
+  // Verify membership live against Clerk rather than trusting the session's
+  // "active org" claim, which can lag right after sign-in or an org switch
+  // and would otherwise wrongly bounce a real member back to /sign-in.
+  const clerk = await clerkClient();
+  const membershipList = await clerk.users.getOrganizationMembershipList({ userId: clerkUserId });
+  const membership = membershipList.data.find((m) => m.organization.id === clerkOrgId);
+  if (!membership) notFound();
+
+  const isAdmin = membership.role === "org:admin";
 
   let [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, clerkOrgId)).limit(1);
   if (!org) {
     // The Clerk webhook (organization.created) may not have synced yet, or
     // may never reach this environment (e.g. local dev with no public
     // tunnel). Create the row inline so orgs work without depending on it.
-    const clerk = await clerkClient();
     const clerkOrg = await clerk.organizations.getOrganization({ organizationId: clerkOrgId });
 
     [org] = await db
@@ -36,8 +42,6 @@ export default async function OrgWorkspacesPage({ params }: { params: Promise<{ 
   if (!org) notFound();
 
   const orgWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
-
-  const isAdmin = orgRole === "org:admin";
 
   return (
     <div>

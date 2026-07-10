@@ -2,10 +2,10 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { eq } from "drizzle-orm";
-import { users, workspaces } from "@/db/schema";
+import { users } from "@/db/schema";
 
 export default async function Home() {
-  const { userId: clerkUserId } = await auth();
+  const { userId: clerkUserId, orgId } = await auth();
   if (!clerkUserId) {
     redirect("/sign-in");
   }
@@ -25,29 +25,13 @@ export default async function Home() {
       ?? "";
     const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null;
 
-    [user] = await db
-      .insert(users)
-      .values({ clerkUserId, email, name })
-      .onConflictDoNothing({ target: users.clerkUserId })
-      .returning();
-
-    if (!user) {
-      [user] = await db.select().from(users).where(eq(users.clerkUserId, clerkUserId)).limit(1);
-    }
+    await db.insert(users).values({ clerkUserId, email, name }).onConflictDoNothing({ target: users.clerkUserId });
   }
 
-  let [personalWorkspace] = await db
-    .select()
-    .from(workspaces)
-    .where(eq(workspaces.ownerId, user.id))
-    .limit(1);
-
-  if (!personalWorkspace) {
-    [personalWorkspace] = await db
-      .insert(workspaces)
-      .values({ name: "Personal", type: "personal", ownerId: user.id, orgId: null })
-      .returning();
+  // Every workspace belongs to an org now, so route by the user's active org.
+  if (orgId) {
+    redirect(`/org/${orgId}/workspaces`);
   }
 
-  redirect(`/workspace/${personalWorkspace.id}`);
+  redirect("/onboarding");
 }

@@ -6,12 +6,12 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { organizations, workspaces } from "@/db/schema";
 
-/** Creates a shared workspace in the given org. Only callable by org admins (checked via Clerk's session claims). */
-export async function createSharedWorkspace(clerkOrgId: string, name: string) {
+/** Creates a workspace in the given org. Only callable by org admins (checked via Clerk's session claims). */
+export async function createWorkspace(clerkOrgId: string, name: string) {
   const { orgId: activeClerkOrgId, orgRole } = await auth();
 
   if (activeClerkOrgId !== clerkOrgId || orgRole !== "org:admin") {
-    throw new Error("Only org admins can create shared workspaces");
+    throw new Error("Only org admins can create workspaces");
   }
 
   const [org] = await db.select().from(organizations).where(eq(organizations.clerkOrgId, clerkOrgId)).limit(1);
@@ -19,12 +19,7 @@ export async function createSharedWorkspace(clerkOrgId: string, name: string) {
     throw new Error("Organization not found");
   }
 
-  await db.insert(workspaces).values({
-    name,
-    type: "shared",
-    orgId: org.id,
-    ownerId: null,
-  });
+  await db.insert(workspaces).values({ name, orgId: org.id });
 
   revalidatePath(`/org/${clerkOrgId}/workspaces`);
 }

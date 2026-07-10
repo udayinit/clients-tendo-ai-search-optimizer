@@ -31,12 +31,11 @@ export const memberships = pgTable("memberships", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Every workspace belongs to an org; all members of that org can access it.
 export const workspaces = pgTable("workspaces", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
-  type: text("type", { enum: ["personal", "shared"] }).notNull(),
-  orgId: uuid("org_id").references(() => organizations.id, { onDelete: "cascade" }),
-  ownerId: uuid("owner_id").references(() => users.id, { onDelete: "cascade" }),
+  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

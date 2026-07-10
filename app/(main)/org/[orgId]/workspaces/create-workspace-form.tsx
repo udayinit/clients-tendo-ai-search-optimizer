@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createSharedWorkspace } from "./actions";
+import { createWorkspace } from "./actions";
 
 export function CreateWorkspaceForm({ clerkOrgId }: { clerkOrgId: string }) {
   const [name, setName] = useState("");
@@ -16,7 +16,7 @@ export function CreateWorkspaceForm({ clerkOrgId }: { clerkOrgId: string }) {
         setError(null);
         startTransition(async () => {
           try {
-            await createSharedWorkspace(clerkOrgId, name);
+            await createWorkspace(clerkOrgId, name);
             setName("");
           } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to create workspace");

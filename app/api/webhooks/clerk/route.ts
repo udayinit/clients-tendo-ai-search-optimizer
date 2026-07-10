@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { memberships, organizations, users, workspaces } from "@/db/schema";
+import { memberships, organizations, users } from "@/db/schema";
 
 // Clerk webhook: keeps our DB in sync with Clerk as the source of truth.
 // Configure in the Clerk dashboard to point at /api/webhooks/clerk, subscribed to:
@@ -46,22 +46,11 @@ export async function POST(req: Request) {
         ?? "";
       const name = [data.first_name, data.last_name].filter(Boolean).join(" ") || null;
 
-      const [user] = await db
+      await db
         .insert(users)
         .values({ clerkUserId: data.id, email, name })
-        .onConflictDoNothing({ target: users.clerkUserId })
-        .returning();
+        .onConflictDoNothing({ target: users.clerkUserId });
 
-      const insertedUser = user ?? (await db.select().from(users).where(eq(users.clerkUserId, data.id)).limit(1))[0];
-
-      if (insertedUser) {
-        await db.insert(workspaces).values({
-          name: "Personal",
-          type: "personal",
-          ownerId: insertedUser.id,
-          orgId: null,
-        });
-      }
       break;
     }
 

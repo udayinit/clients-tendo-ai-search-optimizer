@@ -35,19 +35,19 @@ export default async function OrgWorkspacesPage({ params }: { params: Promise<{ 
   }
   if (!org) notFound();
 
-  const sharedWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
+  const orgWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
 
   const isAdmin = orgRole === "org:admin";
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold">{org.name} — Shared Workspaces</h1>
+      <h1 className="mb-6 text-xl font-semibold">{org.name} — Workspaces</h1>
 
       {isAdmin && <CreateWorkspaceForm clerkOrgId={clerkOrgId} />}
 
       <div className="space-y-2">
-        {sharedWorkspaces.length === 0 && <p className="text-sm text-gray-500">No shared workspaces yet.</p>}
-        {sharedWorkspaces.map((ws) => (
+        {orgWorkspaces.length === 0 && <p className="text-sm text-gray-500">No workspaces yet.</p>}
+        {orgWorkspaces.map((ws) => (
           <Link
             key={ws.id}
             href={`/workspace/${ws.id}`}

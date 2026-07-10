@@ -5,19 +5,13 @@ import { organizations, users, workspaces } from "@/db/schema";
 
 /**
  * Checks whether `userId` (our internal users.id) can access `workspaceId`.
- * Personal workspaces: owner_id must match.
- * Shared workspaces: verified live against Clerk org membership, since the
- * `memberships` table is only a cache and can lag behind Clerk (removals, etc).
+ * Every workspace belongs to an org; access is verified live against Clerk
+ * org membership, since the `memberships` table is only a cache and can lag
+ * behind Clerk (removals, etc).
  */
 export async function canAccessWorkspace(userId: string, workspaceId: string): Promise<boolean> {
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   if (!workspace) return false;
-
-  if (workspace.type === "personal") {
-    return workspace.ownerId === userId;
-  }
-
-  if (!workspace.orgId) return false;
 
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user) return false;

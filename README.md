@@ -1,10 +1,10 @@
 # AI Optimizer
 
-A Next.js app where each user (personal workspace) or org (shared workspace)
-submits URLs to scrape. Every scrape streams live, pauses for human
-approval before the AI-extraction stage runs, and each resubmission of the
-same URL in a workspace is kept as a new version so you can see how a page's
-content/analysis has evolved over time.
+A Next.js app where orgs create workspaces (any org member can access any of
+that org's workspaces) and submit URLs to scrape. Every scrape streams live,
+pauses for human approval before the AI-extraction stage runs, and each
+resubmission of the same URL in a workspace is kept as a new version so you
+can see how a page's content/analysis has evolved over time.
 
 ## Stack
 

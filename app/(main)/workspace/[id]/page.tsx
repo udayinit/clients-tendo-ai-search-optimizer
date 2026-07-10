@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { desc, eq, getTableColumns } from "drizzle-orm";
 import { db } from "@/db";
-import { urlSources, urlVersions, users, workspaces } from "@/db/schema";
+import { organizations, urlSources, urlVersions, users, workspaces } from "@/db/schema";
 import { canAccessWorkspace } from "@/lib/access";
 import { getCurrentUser } from "@/lib/current-user";
 import { UrlSubmitPanel } from "./url-submit-panel";
@@ -27,6 +27,8 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, id)).limit(1);
   if (!workspace) notFound();
+
+  const [org] = await db.select().from(organizations).where(eq(organizations.id, workspace.orgId)).limit(1);
 
   const sources = await db.select().from(urlSources).where(eq(urlSources.workspaceId, id)).orderBy(desc(urlSources.createdAt));
 
@@ -53,7 +55,7 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
   return (
     <div>
       <h1 className="mb-1 text-xl font-semibold">{workspace.name}</h1>
-      <p className="mb-6 text-sm text-gray-500">{workspace.type} workspace</p>
+      <p className="mb-6 text-sm text-gray-500">{org?.name ?? "Unknown org"} workspace</p>
 
       <UrlSubmitPanel workspaceId={id} />
 

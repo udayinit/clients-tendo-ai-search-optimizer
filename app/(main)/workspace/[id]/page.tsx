@@ -17,6 +17,15 @@ const STATUS_LABEL: Record<string, string> = {
   failed: "Failed",
 };
 
+const STATUS_BADGE: Record<string, string> = {
+  scraping: "hig-badge-blue",
+  extracting: "hig-badge-blue",
+  pending_approval: "hig-badge-orange",
+  completed: "hig-badge-green",
+  rejected: "hig-badge-red",
+  failed: "hig-badge-red",
+};
+
 export default async function WorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
@@ -63,13 +72,15 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="mb-1 text-xl font-semibold">{workspace.name}</h1>
-          <p className="text-sm text-gray-500">{org?.name ?? "Unknown org"} workspace</p>
+          <h1 className="mb-0.5 text-[28px] font-semibold tracking-tight">{workspace.name}</h1>
+          <p className="text-[15px]" style={{ color: "var(--color-secondary-label)" }}>
+            {org?.name ?? "Unknown org"} workspace
+          </p>
         </div>
         {isAdmin && (
-          <Link href={`/workspace/${id}/settings`} className="text-sm text-gray-500 hover:underline">
+          <Link href={`/workspace/${id}/settings`} className="hig-btn-plain">
             AI settings
           </Link>
         )}
@@ -77,32 +88,37 @@ export default async function WorkspacePage({ params }: { params: Promise<{ id: 
 
       <UrlSubmitPanel workspaceId={id} />
 
-      <div className="space-y-4">
-        {sources.length === 0 && <p className="text-sm text-gray-500">No URLs searched yet.</p>}
+      <div className="space-y-5">
+        {sources.length === 0 && (
+          <p className="text-[15px]" style={{ color: "var(--color-secondary-label)" }}>
+            No URLs searched yet.
+          </p>
+        )}
         {sources.map((source) => {
           const sourceVersions = versionsBySource.get(source.id) ?? [];
           return (
-            <div key={source.id} className="rounded border bg-white p-3">
-              <a href={source.url} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 hover:underline">
-                {source.url}
-              </a>
-              <div className="mt-2 space-y-2">
+            <div key={source.id} className="hig-card overflow-hidden">
+              <div className="px-4 py-3" style={{ borderBottom: "0.5px solid var(--color-separator)" }}>
+                <a href={source.url} target="_blank" rel="noreferrer" className="text-[15px] font-medium hover:underline">
+                  {source.url}
+                </a>
+              </div>
+              <div>
                 {sourceVersions.map((version) => (
-                  <Link
-                    key={version.id}
-                    href={`/workspace/${id}/versions/${version.id}`}
-                    className="block rounded border border-gray-100 bg-gray-50 p-2 text-xs hover:bg-gray-100"
-                  >
+                  <Link key={version.id} href={`/workspace/${id}/versions/${version.id}`} className="hig-list-row block hover:bg-black/[0.02]">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">v{version.versionNumber}</span>
-                      <span className="text-gray-500">{STATUS_LABEL[version.status] ?? version.status}</span>
+                      <span className="text-[14px] font-medium">v{version.versionNumber}</span>
+                      <span className={`hig-badge ${STATUS_BADGE[version.status] ?? "hig-badge-blue"}`}>
+                        {STATUS_LABEL[version.status] ?? version.status}
+                      </span>
                     </div>
-                    <div className="mt-0.5 text-gray-400">
-                      {version.submittedByName ?? version.submittedByEmail ?? "Unknown user"} ·{" "}
-                      {version.createdAt.toLocaleString()}
+                    <div className="mt-0.5 text-[12px]" style={{ color: "var(--color-tertiary-label)" }}>
+                      {version.submittedByName ?? version.submittedByEmail ?? "Unknown user"} · {version.createdAt.toLocaleString()}
                     </div>
                     {version.rawContent && (
-                      <p className="mt-1 line-clamp-2 text-gray-600">{version.rawContent.slice(0, 200)}</p>
+                      <p className="mt-1 line-clamp-2 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+                        {version.rawContent.slice(0, 200)}
+                      </p>
                     )}
                   </Link>
                 ))}

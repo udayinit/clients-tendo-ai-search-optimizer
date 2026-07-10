@@ -27,17 +27,13 @@ export default async function NewWorkspacePage({ params }: { params: Promise<{ o
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold">{org.name} — Workspaces</h1>
+      <h1 className="mb-6 text-[22px] font-semibold tracking-tight">{org.name} — Workspaces</h1>
 
       <CreateWorkspaceForm clerkOrgId={clerkOrgId} />
 
-      <div className="space-y-2">
+      <div className="hig-card mt-6 overflow-hidden">
         {orgWorkspaces.map((ws) => (
-          <Link
-            key={ws.id}
-            href={`/workspace/${ws.id}`}
-            className="block rounded border bg-white p-3 text-sm hover:bg-gray-50"
-          >
+          <Link key={ws.id} href={`/workspace/${ws.id}`} className="hig-list-row block text-[14px] hover:bg-black/[0.02]">
             {ws.name}
           </Link>
         ))}

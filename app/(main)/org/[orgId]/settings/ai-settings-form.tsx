@@ -23,7 +23,7 @@ export function AiSettingsForm({
 
   return (
     <form
-      className="max-w-md space-y-4 rounded border bg-white p-4"
+      className="hig-card max-w-md space-y-4 p-4"
       onSubmit={(e) => {
         e.preventDefault();
         setError(null);
@@ -40,27 +40,27 @@ export function AiSettingsForm({
       }}
     >
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Anthropic API key</label>
-        {hasKey && <p className="mb-1 text-xs text-gray-500">Currently set: {maskedKey}</p>}
+        <label className="mb-1 block text-[13px] font-medium">Anthropic API key</label>
+        {hasKey && (
+          <p className="mb-1 text-xs" style={{ color: "var(--color-secondary-label)" }}>
+            Currently set: {maskedKey}
+          </p>
+        )}
         <input
           type="password"
-          className="w-full rounded border px-3 py-1.5 text-sm"
+          className="hig-input"
           placeholder={hasKey ? "Enter a new key to replace it" : "sk-ant-..."}
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs" style={{ color: "var(--color-tertiary-label)" }}>
           Used for AI analysis across all workspaces in this org, unless a workspace has its own override.
         </p>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Model</label>
-        <select
-          className="w-full rounded border px-3 py-1.5 text-sm"
-          value={selectedModel}
-          onChange={(e) => setSelectedModel(e.target.value)}
-        >
+        <label className="mb-1 block text-[13px] font-medium">Model</label>
+        <select className="hig-input" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
           {AVAILABLE_MODELS.map((m) => (
             <option key={m.id} value={m.id}>
               {m.label}
@@ -69,15 +69,19 @@ export function AiSettingsForm({
         </select>
       </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={isPending} className="hig-btn hig-btn-primary">
         {isPending ? "Saving..." : "Save"}
       </button>
-      {saved && <span className="ml-3 text-sm text-green-600">Saved.</span>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {saved && (
+        <span className="ml-3 text-[13px]" style={{ color: "var(--color-green)" }}>
+          Saved.
+        </span>
+      )}
+      {error && (
+        <p className="text-[13px]" style={{ color: "var(--color-red)" }}>
+          {error}
+        </p>
+      )}
     </form>
   );
 }

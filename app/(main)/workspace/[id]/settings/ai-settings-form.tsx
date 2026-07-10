@@ -24,9 +24,17 @@ export function WorkspaceAiSettingsForm({
   const [saved, setSaved] = useState(false);
 
   return (
-    <div className="max-w-md space-y-4 rounded border bg-white p-4">
-      {!hasOverride && <p className="text-sm text-gray-500">Currently using the org default AI settings.</p>}
-      {hasOverride && maskedKey && <p className="text-sm text-gray-500">Override key: {maskedKey}</p>}
+    <div className="hig-card max-w-md space-y-4 p-4">
+      {!hasOverride && (
+        <p className="text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+          Currently using the org default AI settings.
+        </p>
+      )}
+      {hasOverride && maskedKey && (
+        <p className="text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+          Override key: {maskedKey}
+        </p>
+      )}
 
       <form
         className="space-y-4"
@@ -46,10 +54,10 @@ export function WorkspaceAiSettingsForm({
         }}
       >
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Override API key</label>
+          <label className="mb-1 block text-[13px] font-medium">Override API key</label>
           <input
             type="password"
-            className="w-full rounded border px-3 py-1.5 text-sm"
+            className="hig-input"
             placeholder={hasOverride ? "Enter a new key to replace it" : "sk-ant-... (leave blank to only set model)"}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
@@ -57,12 +65,8 @@ export function WorkspaceAiSettingsForm({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Model</label>
-          <select
-            className="w-full rounded border px-3 py-1.5 text-sm"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-          >
+          <label className="mb-1 block text-[13px] font-medium">Model</label>
+          <select className="hig-input" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
             {AVAILABLE_MODELS.map((m) => (
               <option key={m.id} value={m.id}>
                 {m.label}
@@ -72,11 +76,7 @@ export function WorkspaceAiSettingsForm({
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-          >
+          <button type="submit" disabled={isPending} className="hig-btn hig-btn-primary">
             {isPending ? "Saving..." : "Save override"}
           </button>
           {hasOverride && (
@@ -94,14 +94,22 @@ export function WorkspaceAiSettingsForm({
                   }
                 })
               }
-              className="text-sm text-red-600 hover:underline"
+              className="hig-btn-destructive"
             >
               Remove override (use org default)
             </button>
           )}
         </div>
-        {saved && <span className="text-sm text-green-600">Saved.</span>}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {saved && (
+          <span className="text-[13px]" style={{ color: "var(--color-green)" }}>
+            Saved.
+          </span>
+        )}
+        {error && (
+          <p className="text-[13px]" style={{ color: "var(--color-red)" }}>
+            {error}
+          </p>
+        )}
       </form>
     </div>
   );

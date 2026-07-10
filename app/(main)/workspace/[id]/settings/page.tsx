@@ -32,12 +32,14 @@ export default async function WorkspaceSettingsPage({ params }: { params: Promis
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="mb-1 text-xl font-semibold">{workspace.name} — AI settings</h1>
-        <p className="text-sm text-gray-500">Manage the AI key used for analysis in this workspace, and the org-wide default.</p>
+        <h1 className="mb-1 text-[22px] font-semibold tracking-tight">{workspace.name} — AI settings</h1>
+        <p className="text-[15px]" style={{ color: "var(--color-secondary-label)" }}>
+          Manage the AI key used for analysis in this workspace, and the org-wide default.
+        </p>
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">This workspace's override</h2>
+        <h2 className="hig-eyebrow mb-2">This workspace&apos;s override</h2>
         <WorkspaceAiSettingsForm
           workspaceId={workspace.id}
           hasOverride={workspaceDisplay.hasKey}
@@ -48,10 +50,10 @@ export default async function WorkspaceSettingsPage({ params }: { params: Promis
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Organization default ({org.name})
-        </h2>
-        <p className="mb-2 text-sm text-gray-500">Used by every workspace in this org that doesn't have its own override.</p>
+        <h2 className="hig-eyebrow mb-2">Organization default ({org.name})</h2>
+        <p className="mb-2 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+          Used by every workspace in this org that doesn&apos;t have its own override.
+        </p>
         <AiSettingsForm clerkOrgId={org.clerkOrgId} hasKey={orgDisplay.hasKey} maskedKey={orgDisplay.maskedKey} model={orgDisplay.model} />
       </div>
     </div>

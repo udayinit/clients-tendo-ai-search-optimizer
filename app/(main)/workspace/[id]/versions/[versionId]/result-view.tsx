@@ -14,8 +14,8 @@ const AI_DIMS = [
   { key: "snippet_readiness", label: "Snippet readiness" },
 ];
 
-function scoreColor(score: number) {
-  return score >= 75 ? "#1D9E75" : score >= 50 ? "#EF9F27" : "#E24B4A";
+function scoreColorVar(score: number) {
+  return score >= 75 ? "var(--color-green)" : score >= 50 ? "var(--color-orange)" : "var(--color-red)";
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -24,10 +24,10 @@ function ScoreRing({ score }: { score: number }) {
   const cy = 44;
   const stroke = 8;
   const circ = 2 * Math.PI * r;
-  const color = scoreColor(score);
+  const color = scoreColorVar(score);
   return (
     <svg width="88" height="88" viewBox="0 0 88 88">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-separator)" strokeWidth={stroke} />
       <circle
         cx={cx}
         cy={cy}
@@ -39,7 +39,7 @@ function ScoreRing({ score }: { score: number }) {
         strokeLinecap="round"
         transform={`rotate(-90 ${cx} ${cy})`}
       />
-      <text x={cx} y={cy + 6} textAnchor="middle" fontSize="18" fontWeight="500" fill="#111827">
+      <text x={cx} y={cy + 6} textAnchor="middle" fontSize="18" fontWeight="600" fill="var(--color-label)">
         {score}
       </text>
     </svg>
@@ -47,22 +47,18 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 function GapCard({ gap, i }: { gap: { issue: string; recommendation: string }; i: number }) {
-  const bg = ["#fee2e2", "#fef3c7", "#dbeafe"];
-  const tc = ["#b91c1c", "#92400e", "#1e40af"];
+  const badgeClass = ["hig-badge-red", "hig-badge-orange", "hig-badge-blue"];
   const labels = ["High impact", "Medium impact", "Low impact"];
   const c = Math.min(i, 2);
   return (
-    <div className="mb-2.5 rounded-lg border border-gray-200 px-5 py-4">
+    <div className="hig-card mb-2.5 px-5 py-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="m-0 flex-1 text-sm font-medium text-gray-900">{gap.issue}</p>
-        <span
-          className="whitespace-nowrap rounded px-2.5 py-0.5 text-[11px]"
-          style={{ background: bg[c], color: tc[c] }}
-        >
-          {labels[c]}
-        </span>
+        <p className="m-0 flex-1 text-[14px] font-medium">{gap.issue}</p>
+        <span className={`hig-badge ${badgeClass[c]}`}>{labels[c]}</span>
       </div>
-      <p className="mt-1.5 text-[13px] leading-relaxed text-gray-600">{gap.recommendation}</p>
+      <p className="mt-1.5 text-[13px] leading-relaxed" style={{ color: "var(--color-secondary-label)" }}>
+        {gap.recommendation}
+      </p>
     </div>
   );
 }
@@ -77,7 +73,7 @@ function renderInline(line: string, keyPrefix: string) {
   return parts.map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return (
-        <strong key={`${keyPrefix}-${i}`} className="font-medium">
+        <strong key={`${keyPrefix}-${i}`} className="font-semibold">
           {part.slice(2, -2)}
         </strong>
       );
@@ -97,7 +93,7 @@ function renderMarkdown(text: string) {
     blocks.push(
       <ul key={key} className="my-2 list-disc pl-6">
         {listItems.map((item, i) => (
-          <li key={i} className="my-1 text-sm leading-relaxed text-gray-900">
+          <li key={i} className="my-1 text-[14px] leading-relaxed">
             {renderInline(item, `${key}-li-${i}`)}
           </li>
         ))}
@@ -109,7 +105,7 @@ function renderMarkdown(text: string) {
   const flushParagraph = (key: string) => {
     if (paragraphLines.length === 0) return;
     blocks.push(
-      <p key={key} className="mb-3 text-sm leading-relaxed text-gray-900">
+      <p key={key} className="mb-3 text-[14px] leading-relaxed">
         {renderInline(paragraphLines.join(" "), key)}
       </p>,
     );
@@ -122,7 +118,7 @@ function renderMarkdown(text: string) {
       flushList(key);
       flushParagraph(key);
       blocks.push(
-        <h3 key={key} className="mb-1.5 mt-5 text-[15px] font-medium text-gray-900">
+        <h3 key={key} className="mb-1.5 mt-5 text-[15px] font-semibold">
           {renderInline(line.slice(4), key)}
         </h3>,
       );
@@ -130,7 +126,7 @@ function renderMarkdown(text: string) {
       flushList(key);
       flushParagraph(key);
       blocks.push(
-        <h2 key={key} className="mb-2 mt-6 text-[17px] font-medium text-gray-900">
+        <h2 key={key} className="mb-2 mt-6 text-[17px] font-semibold">
           {renderInline(line.slice(3), key)}
         </h2>,
       );
@@ -138,7 +134,7 @@ function renderMarkdown(text: string) {
       flushList(key);
       flushParagraph(key);
       blocks.push(
-        <h1 key={key} className="mb-2.5 mt-6 text-xl font-medium text-gray-900">
+        <h1 key={key} className="mb-2.5 mt-6 text-xl font-semibold">
           {renderInline(line.slice(2), key)}
         </h1>,
       );
@@ -166,30 +162,40 @@ export function ResultView({ data }: { data: AnalysisResult }) {
   return (
     <div>
       <div className="mb-6 flex flex-wrap gap-3">
-        <div className="flex flex-none items-center gap-4 rounded-lg bg-gray-50 px-5 py-4">
+        <div className="hig-card flex flex-none items-center gap-4 px-5 py-4">
           <ScoreRing score={data.score} />
           <div>
-            <p className="m-0 text-xs text-gray-500">AI search score</p>
-            <p className="m-0 mb-1 mt-0.5 text-sm font-medium text-gray-900">{data.title}</p>
-            {data.target_query && <p className="m-0 mb-1 text-[11px] text-gray-400">Benchmarked against: &quot;{data.target_query}&quot;</p>}
-            <p className="m-0 text-[11px] text-gray-400">
+            <p className="m-0 text-xs" style={{ color: "var(--color-secondary-label)" }}>
+              AI search score
+            </p>
+            <p className="m-0 mb-1 mt-0.5 text-[14px] font-medium">{data.title}</p>
+            {data.target_query && (
+              <p className="m-0 mb-1 text-[11px]" style={{ color: "var(--color-tertiary-label)" }}>
+                Benchmarked against: &quot;{data.target_query}&quot;
+              </p>
+            )}
+            <p className="m-0 text-[11px]" style={{ color: "var(--color-tertiary-label)" }}>
               {data.score >= 75 ? "AI-ready" : data.score >= 50 ? "Partially optimized" : "Poor AI visibility"}
             </p>
           </div>
         </div>
         {data.score_breakdown && (
-          <div className="min-w-[200px] flex-1 rounded-lg bg-gray-50 px-5 py-4">
-            <p className="m-0 mb-2.5 text-xs text-gray-500">AI visibility breakdown</p>
+          <div className="hig-card min-w-[200px] flex-1 px-5 py-4">
+            <p className="m-0 mb-2.5 text-xs" style={{ color: "var(--color-secondary-label)" }}>
+              AI visibility breakdown
+            </p>
             {AI_DIMS.map(({ key, label }) => {
               const v = data.score_breakdown[key] ?? 0;
               return (
                 <div key={key} className="mb-1.5">
                   <div className="mb-0.5 flex justify-between">
-                    <span className="text-xs text-gray-500">{label}</span>
-                    <span className="text-xs font-medium text-gray-900">{v}</span>
+                    <span className="text-xs" style={{ color: "var(--color-secondary-label)" }}>
+                      {label}
+                    </span>
+                    <span className="text-xs font-medium">{v}</span>
                   </div>
-                  <div className="h-1 rounded bg-gray-200">
-                    <div className="h-1 rounded" style={{ width: `${v}%`, background: scoreColor(v) }} />
+                  <div className="h-1 rounded" style={{ background: "var(--color-secondary-system-background)" }}>
+                    <div className="h-1 rounded" style={{ width: `${v}%`, background: scoreColorVar(v) }} />
                   </div>
                 </div>
               );
@@ -198,61 +204,65 @@ export function ResultView({ data }: { data: AnalysisResult }) {
         )}
       </div>
 
-      <div className="mb-6 flex overflow-x-auto border-b border-gray-200">
+      <div className="hig-segmented mb-6 w-fit overflow-x-auto">
         {TABS.map((t, i) => (
-          <button
-            key={t}
-            onClick={() => setTab(i)}
-            className={`whitespace-nowrap border-b-2 px-4 py-2 text-[13px] ${
-              tab === i ? "border-gray-900 font-medium text-gray-900" : "border-transparent text-gray-500"
-            }`}
-          >
+          <button key={t} onClick={() => setTab(i)} data-active={tab === i} className="hig-segmented-item">
             {t}
           </button>
         ))}
       </div>
 
-      {tab === 0 && <p className="m-0 text-sm leading-loose text-gray-900">{data.summary}</p>}
+      {tab === 0 && <p className="m-0 text-[15px] leading-loose">{data.summary}</p>}
 
       {tab === 1 && data.benchmark && (
         <div>
-          <p className="mb-5 text-[13px] text-gray-500">
-            Live AI search results for <strong className="font-medium text-gray-900">&quot;{data.benchmark.query}&quot;</strong> — your page
-            scored against what AI is actually surfacing.
+          <p className="mb-5 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+            Live AI search results for <strong className="font-medium">&quot;{data.benchmark.query}&quot;</strong> — your page scored against
+            what AI is actually surfacing.
           </p>
-          <div className="mb-3">
-            <p className="mb-2 text-xs font-medium text-gray-500">What AI search currently surfaces</p>
+          <div className="hig-card mb-3">
+            <p className="hig-eyebrow px-5 pt-4">What AI search currently surfaces</p>
             {data.benchmark.what_ai_surfaces?.map((item, i) => (
-              <div key={i} className="flex gap-2.5 border-b border-gray-100 py-2">
-                <span className="min-w-[18px] pt-px text-xs text-gray-400">{i + 1}</span>
-                <p className="m-0 text-[13px] leading-relaxed text-gray-900">{item}</p>
+              <div key={i} className="hig-list-row flex gap-2.5">
+                <span className="min-w-[18px] pt-px text-xs" style={{ color: "var(--color-tertiary-label)" }}>
+                  {i + 1}
+                </span>
+                <p className="m-0 text-[13px] leading-relaxed">{item}</p>
               </div>
             ))}
           </div>
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 px-5 py-4">
-              <p className="mb-2.5 text-xs font-medium text-green-700">Page covers</p>
+            <div className="hig-card px-5 py-4">
+              <p className="mb-2.5 text-xs font-medium" style={{ color: "var(--color-green)" }}>
+                Page covers
+              </p>
               {data.benchmark.page_covers?.map((item, i) => (
-                <p key={i} className="mb-1.5 text-[13px] leading-snug text-gray-900">
+                <p key={i} className="mb-1.5 text-[13px] leading-snug">
                   ✓ {item}
                 </p>
               ))}
             </div>
-            <div className="rounded-lg border border-gray-200 px-5 py-4">
-              <p className="mb-2.5 text-xs font-medium text-red-700">Page misses</p>
+            <div className="hig-card px-5 py-4">
+              <p className="mb-2.5 text-xs font-medium" style={{ color: "var(--color-red)" }}>
+                Page misses
+              </p>
               {data.benchmark.page_misses?.map((item, i) => (
-                <p key={i} className="mb-1.5 text-[13px] leading-snug text-gray-900">
+                <p key={i} className="mb-1.5 text-[13px] leading-snug">
                   ✗ {item}
                 </p>
               ))}
             </div>
           </div>
           {data.benchmark.unique_to_page?.length > 0 && (
-            <div className="mt-3 rounded-lg border border-gray-200 bg-blue-50 px-5 py-4">
-              <p className="mb-1.5 text-xs font-medium text-blue-700">Citation opportunities — unique to this page</p>
-              <p className="mb-2.5 text-xs text-gray-500">These facts aren&apos;t in AI search results yet — properly structured, they could earn citations.</p>
+            <div className="mt-3 rounded-lg px-5 py-4" style={{ background: "var(--color-tint-indigo-bg)" }}>
+              <p className="mb-1.5 text-xs font-medium" style={{ color: "var(--color-indigo)" }}>
+                Citation opportunities — unique to this page
+              </p>
+              <p className="mb-2.5 text-xs" style={{ color: "var(--color-secondary-label)" }}>
+                These facts aren&apos;t in AI search results yet — properly structured, they could earn citations.
+              </p>
               {data.benchmark.unique_to_page?.map((item, i) => (
-                <p key={i} className="mb-1.5 text-[13px] leading-snug text-gray-900">
+                <p key={i} className="mb-1.5 text-[13px] leading-snug">
                   ★ {item}
                 </p>
               ))}
@@ -263,7 +273,9 @@ export function ResultView({ data }: { data: AnalysisResult }) {
 
       {tab === 2 && (
         <div>
-          <p className="mb-4 text-[13px] text-gray-500">{data.gaps?.length} gaps identified — grounded in benchmark findings.</p>
+          <p className="mb-4 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+            {data.gaps?.length} gaps identified — grounded in benchmark findings.
+          </p>
           {data.gaps?.map((gap, i) => (
             <GapCard key={i} gap={gap} i={i} />
           ))}
@@ -273,28 +285,30 @@ export function ResultView({ data }: { data: AnalysisResult }) {
       {tab === 3 && (
         <div>
           {data.stat_warning && (
-            <div className="mb-3 flex items-start gap-2.5 rounded-md bg-amber-50 px-4 py-3">
+            <div className="mb-3 flex items-start gap-2.5 rounded-md px-4 py-3" style={{ background: "var(--color-tint-orange-bg)" }}>
               <span className="text-sm">⚠</span>
-              <p className="m-0 text-[13px] leading-relaxed text-amber-800">
+              <p className="m-0 text-[13px] leading-relaxed" style={{ color: "var(--color-orange)" }}>
                 Statistics detected in visual callout format — likely invisible to AI scrapers. The rewrite converts them to fully attributed
                 inline sentences.
               </p>
             </div>
           )}
           <div className="mb-3 flex items-center justify-between">
-            <p className="m-0 text-[13px] text-gray-500">Restructured for AI extraction and citation.</p>
+            <p className="m-0 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+              Restructured for AI extraction and citation.
+            </p>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(data.optimized);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
               }}
-              className="rounded border px-3.5 py-1.5 text-[13px]"
+              className="hig-btn hig-btn-secondary"
             >
               {copied ? "Copied!" : "Copy content"}
             </button>
           </div>
-          <div className="rounded-lg border border-gray-200 px-6 py-5">{renderMarkdown(data.optimized)}</div>
+          <div className="hig-card px-6 py-5">{renderMarkdown(data.optimized)}</div>
         </div>
       )}
     </div>

@@ -60,15 +60,15 @@ export default async function VersionDetailPage({
 
   return (
     <div>
-      <Link href={`/workspace/${workspaceId}`} className="text-sm text-gray-500 hover:underline">
+      <Link href={`/workspace/${workspaceId}`} className="hig-btn-plain -ml-1">
         &larr; Back to workspace
       </Link>
 
-      <h1 className="mb-1 mt-3 text-lg font-semibold">
-        {source.url} <span className="text-gray-400">· v{version.versionNumber}</span>
+      <h1 className="mb-1 mt-3 text-[22px] font-semibold tracking-tight">
+        {source.url} <span style={{ color: "var(--color-tertiary-label)" }}>· v{version.versionNumber}</span>
       </h1>
 
-      <div className="mb-4 text-xs text-gray-500">
+      <div className="mb-5 space-y-0.5 text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
         <div>Status: {STATUS_LABEL[version.status] ?? version.status}</div>
         <div>
           Submitted by {row.submittedByName ?? row.submittedByEmail ?? "Unknown user"} on{" "}
@@ -80,7 +80,9 @@ export default async function VersionDetailPage({
             {version.approvedAt.toLocaleString()}
           </div>
         )}
-        {version.errorMessage && <div className="text-red-600">Error: {version.errorMessage}</div>}
+        {version.errorMessage && (
+          <div style={{ color: "var(--color-red)" }}>Error: {version.errorMessage}</div>
+        )}
       </div>
 
       {version.status === "pending_approval" && <VersionActions versionId={version.id} />}
@@ -90,16 +92,20 @@ export default async function VersionDetailPage({
       ) : (
         <>
           {version.extractedData !== null && (
-            <div className="mb-4 rounded border bg-white p-3">
-              <div className="mb-1 text-xs font-medium uppercase text-gray-400">Extracted data</div>
-              <pre className="whitespace-pre-wrap text-xs text-gray-700">{JSON.stringify(version.extractedData, null, 2)}</pre>
+            <div className="hig-card mb-4 p-3">
+              <div className="hig-eyebrow mb-1">Extracted data</div>
+              <pre className="whitespace-pre-wrap text-[12px]" style={{ color: "var(--color-secondary-label)" }}>
+                {JSON.stringify(version.extractedData, null, 2)}
+              </pre>
             </div>
           )}
 
           {version.rawContent && (
-            <div className="rounded border bg-white p-3">
-              <div className="mb-1 text-xs font-medium uppercase text-gray-400">Raw scraped content</div>
-              <p className="whitespace-pre-wrap text-sm text-gray-700">{version.rawContent}</p>
+            <div className="hig-card p-3">
+              <div className="hig-eyebrow mb-1">Raw scraped content</div>
+              <p className="whitespace-pre-wrap text-[14px]" style={{ color: "var(--color-secondary-label)" }}>
+                {version.rawContent}
+              </p>
             </div>
           )}
         </>

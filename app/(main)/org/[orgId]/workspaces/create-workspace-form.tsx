@@ -25,20 +25,20 @@ export function CreateWorkspaceForm({ clerkOrgId }: { clerkOrgId: string }) {
       }}
     >
       <input
-        className="rounded border px-3 py-1.5 text-sm"
+        className="hig-input flex-1"
         placeholder="Workspace name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
       />
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={isPending} className="hig-btn hig-btn-primary">
         {isPending ? "Creating..." : "Create workspace"}
       </button>
-      {error && <span className="self-center text-sm text-red-600">{error}</span>}
+      {error && (
+        <span className="self-center text-[13px]" style={{ color: "var(--color-red)" }}>
+          {error}
+        </span>
+      )}
     </form>
   );
 }

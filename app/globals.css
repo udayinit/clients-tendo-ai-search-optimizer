@@ -1,3 +1,273 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---------------------------------------------------------------------
+   Apple Human Interface Guidelines — semantic design tokens.
+   Values match Apple's documented system colors and text styles.
+   https://developer.apple.com/design/human-interface-guidelines
+   --------------------------------------------------------------------- */
+:root {
+  /* System accent colors (light) */
+  --color-blue: #007aff;
+  --color-green: #34c759;
+  --color-orange: #ff9500;
+  --color-red: #ff3b30;
+  --color-indigo: #5856d6;
+
+  /* Backgrounds (light) */
+  --color-system-background: #ffffff;
+  --color-secondary-system-background: #f2f2f7;
+  --color-tertiary-system-background: #ffffff;
+  --color-grouped-background: #f2f2f7;
+  --color-secondary-grouped-background: #ffffff;
+
+  /* Labels (light) */
+  --color-label: rgba(0, 0, 0, 1);
+  --color-secondary-label: rgba(60, 60, 67, 0.6);
+  --color-tertiary-label: rgba(60, 60, 67, 0.3);
+  --color-quaternary-label: rgba(60, 60, 67, 0.18);
+
+  /* Separators (light) */
+  --color-separator: rgba(60, 60, 67, 0.29);
+  --color-opaque-separator: #c6c6c8;
+
+  /* Semantic tints (light) */
+  --color-tint-blue-bg: rgba(0, 122, 255, 0.12);
+  --color-tint-green-bg: rgba(52, 199, 89, 0.12);
+  --color-tint-orange-bg: rgba(255, 149, 0, 0.14);
+  --color-tint-red-bg: rgba(255, 59, 48, 0.12);
+  --color-tint-indigo-bg: rgba(88, 86, 214, 0.1);
+
+  /* Spacing (8pt grid) + radii */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-blue: #0a84ff;
+    --color-green: #30d158;
+    --color-orange: #ff9f0a;
+    --color-red: #ff453a;
+    --color-indigo: #5e5ce6;
+
+    --color-system-background: #000000;
+    --color-secondary-system-background: #1c1c1e;
+    --color-tertiary-system-background: #2c2c2e;
+    --color-grouped-background: #000000;
+    --color-secondary-grouped-background: #1c1c1e;
+
+    --color-label: rgba(255, 255, 255, 1);
+    --color-secondary-label: rgba(235, 235, 245, 0.6);
+    --color-tertiary-label: rgba(235, 235, 245, 0.3);
+    --color-quaternary-label: rgba(235, 235, 245, 0.16);
+
+    --color-separator: rgba(84, 84, 88, 0.6);
+    --color-opaque-separator: #38383a;
+
+    --color-tint-blue-bg: rgba(10, 132, 255, 0.18);
+    --color-tint-green-bg: rgba(48, 209, 88, 0.16);
+    --color-tint-orange-bg: rgba(255, 159, 10, 0.18);
+    --color-tint-red-bg: rgba(255, 69, 58, 0.18);
+    --color-tint-indigo-bg: rgba(94, 92, 230, 0.18);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--color-grouped-background);
+  color: var(--color-label);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.294;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-blue);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Primitives
+   --------------------------------------------------------------------- */
+
+.hig-card {
+  background: var(--color-secondary-grouped-background);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-separator);
+}
+
+.hig-list-row {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 0.5px solid var(--color-separator);
+}
+.hig-list-row:last-child {
+  border-bottom: none;
+}
+
+.hig-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 590;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.hig-btn:active {
+  opacity: 0.7;
+}
+.hig-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.hig-btn-primary {
+  background: var(--color-blue);
+  color: #ffffff;
+}
+
+.hig-btn-secondary {
+  background: var(--color-tint-blue-bg);
+  color: var(--color-blue);
+}
+
+.hig-btn-plain {
+  background: transparent;
+  color: var(--color-blue);
+  padding: 8px 4px;
+}
+
+.hig-btn-destructive {
+  background: transparent;
+  color: var(--color-red);
+  padding: 8px 4px;
+}
+
+.hig-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid var(--color-separator);
+  background: var(--color-tertiary-system-background);
+  color: var(--color-label);
+  font-size: 15px;
+}
+.hig-input::placeholder {
+  color: var(--color-tertiary-label);
+}
+.hig-input:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: -1px;
+}
+
+.hig-segmented {
+  display: inline-flex;
+  padding: 2px;
+  background: var(--color-secondary-system-background);
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.hig-segmented-item {
+  padding: 6px 14px;
+  border-radius: calc(var(--radius-md) - 2px);
+  font-size: 13px;
+  font-weight: 590;
+  color: var(--color-secondary-label);
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.hig-segmented-item[data-active="true"] {
+  background: var(--color-tertiary-system-background);
+  color: var(--color-label);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.hig-eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-secondary-label);
+}
+
+.hig-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.hig-badge-red {
+  background: var(--color-tint-red-bg);
+  color: var(--color-red);
+}
+.hig-badge-orange {
+  background: var(--color-tint-orange-bg);
+  color: var(--color-orange);
+}
+.hig-badge-blue {
+  background: var(--color-tint-blue-bg);
+  color: var(--color-blue);
+}
+.hig-badge-green {
+  background: var(--color-tint-green-bg);
+  color: var(--color-green);
+}

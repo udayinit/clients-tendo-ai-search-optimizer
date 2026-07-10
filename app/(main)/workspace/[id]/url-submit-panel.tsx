@@ -94,48 +94,50 @@ export function UrlSubmitPanel({ workspaceId }: { workspaceId: string }) {
   }
 
   return (
-    <div className="mb-6 rounded border bg-white p-4">
+    <div className="hig-card mb-6 p-4">
       <form className="flex gap-2" onSubmit={submit}>
         <input
           type="url"
           required
           placeholder="https://example.com/article"
-          className="flex-1 rounded border px-3 py-1.5 text-sm"
+          className="hig-input flex-1"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={state.stage === "fetching"}
         />
-        <button
-          type="submit"
-          disabled={state.stage === "fetching"}
-          className="rounded bg-gray-900 px-3 py-1.5 text-sm text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={state.stage === "fetching"} className="hig-btn hig-btn-primary">
           {state.stage === "fetching" ? "Fetching..." : "Scrape"}
         </button>
       </form>
 
-      {state.stage === "error" && <p className="mt-3 text-sm text-red-600">{state.message}</p>}
+      {state.stage === "error" && (
+        <p className="mt-3 text-[13px]" style={{ color: "var(--color-red)" }}>
+          {state.message}
+        </p>
+      )}
 
       {state.stage === "result" && (
-        <div className="mt-4 rounded border border-amber-300 bg-amber-50 p-3">
-          <div className="mb-1 text-xs font-medium uppercase text-amber-700">Awaiting your approval</div>
-          {state.result.title && <div className="text-sm font-semibold">{state.result.title}</div>}
-          {state.result.description && <p className="text-sm text-gray-600">{state.result.description}</p>}
-          <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs text-gray-500">
+        <div className="mt-4 rounded-lg p-3" style={{ background: "var(--color-tint-orange-bg)" }}>
+          <div className="hig-eyebrow mb-1" style={{ color: "var(--color-orange)" }}>
+            Awaiting your approval
+          </div>
+          {state.result.title && <div className="text-[14px] font-semibold">{state.result.title}</div>}
+          {state.result.description && (
+            <p className="text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+              {state.result.description}
+            </p>
+          )}
+          <p
+            className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-[12px]"
+            style={{ color: "var(--color-tertiary-label)" }}
+          >
             {state.result.text.slice(0, 2000)}
           </p>
           <div className="mt-3 flex gap-2">
-            <Link
-              href={`/workspace/${workspaceId}/versions/${state.result.versionId}`}
-              className="rounded bg-gray-900 px-3 py-1.5 text-xs text-white"
-            >
+            <Link href={`/workspace/${workspaceId}/versions/${state.result.versionId}`} className="hig-btn hig-btn-primary">
               Review & approve →
             </Link>
-            <button
-              onClick={() => reject(state.result.versionId)}
-              disabled={actionPending}
-              className="rounded border px-3 py-1.5 text-xs disabled:opacity-50"
-            >
+            <button onClick={() => reject(state.result.versionId)} disabled={actionPending} className="hig-btn-destructive">
               Reject
             </button>
           </div>

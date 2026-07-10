@@ -8,22 +8,19 @@ export function OrgNavLink() {
 
   if (!orgId) {
     return (
-      <Link href="/onboarding" className="text-sm text-gray-500 hover:underline">
+      <Link href="/onboarding" className="hig-btn-plain">
         Get started
       </Link>
     );
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <Link href={`/org/${orgId}/workspaces`} className="text-sm text-gray-500 hover:underline">
+    <div className="flex items-center gap-1">
+      <Link href={`/org/${orgId}/workspaces`} className="hig-btn-plain">
         Workspaces
       </Link>
       {orgRole === "org:admin" && (
-        <Link
-          href={`/org/${orgId}/workspaces/new`}
-          className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-gray-800"
-        >
+        <Link href={`/org/${orgId}/workspaces/new`} className="hig-btn hig-btn-secondary">
           Create workspace
         </Link>
       )}

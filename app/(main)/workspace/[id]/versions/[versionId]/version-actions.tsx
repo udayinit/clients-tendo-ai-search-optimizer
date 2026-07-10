@@ -71,28 +71,28 @@ export function VersionActions({ versionId }: { versionId: string }) {
   }
 
   return (
-    <div className="mt-3 rounded border border-amber-300 bg-amber-50 p-3">
-      <p className="mb-2 text-xs text-amber-800">
-        Approving sends this page's content to your configured AI provider for analysis — this makes a paid API call.
+    <div className="mb-6 rounded-lg p-4" style={{ background: "var(--color-tint-orange-bg)" }}>
+      <p className="mb-3 text-[13px]" style={{ color: "var(--color-orange)" }}>
+        Approving sends this page&apos;s content to your configured AI provider for analysis — this makes a paid API call.
       </p>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={approveAndAnalyze}
-          disabled={pending}
-          className="rounded bg-gray-900 px-3 py-1.5 text-xs text-white disabled:opacity-50"
-        >
+      <div className="flex items-center gap-3">
+        <button onClick={approveAndAnalyze} disabled={pending} className="hig-btn hig-btn-primary">
           {pending ? "Analyzing..." : "Approve & analyze with AI"}
         </button>
-        <button
-          onClick={reject}
-          disabled={pending}
-          className="rounded border px-3 py-1.5 text-xs disabled:opacity-50"
-        >
+        <button onClick={reject} disabled={pending} className="hig-btn-destructive">
           Reject
         </button>
-        {stageLabel && <span className="text-xs text-gray-500">{stageLabel}</span>}
+        {stageLabel && (
+          <span className="text-[13px]" style={{ color: "var(--color-secondary-label)" }}>
+            {stageLabel}
+          </span>
+        )}
       </div>
-      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      {error && (
+        <p className="mt-2 text-[13px]" style={{ color: "var(--color-red)" }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }

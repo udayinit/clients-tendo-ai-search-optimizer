@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 
 export function OrgNavLink() {
-  const { orgId } = useAuth();
+  const { orgId, orgRole } = useAuth();
 
   if (!orgId) {
     return (
@@ -15,8 +15,18 @@ export function OrgNavLink() {
   }
 
   return (
-    <Link href={`/org/${orgId}/workspaces`} className="text-sm text-gray-500 hover:underline">
-      Workspaces
-    </Link>
+    <div className="flex items-center gap-4">
+      <Link href={`/org/${orgId}/workspaces`} className="text-sm text-gray-500 hover:underline">
+        Workspaces
+      </Link>
+      {orgRole === "org:admin" && (
+        <Link
+          href={`/org/${orgId}/workspaces/new`}
+          className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-gray-800"
+        >
+          Create workspace
+        </Link>
+      )}
+    </div>
   );
 }

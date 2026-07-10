@@ -1,16 +1,22 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { organizations, workspaces } from "@/db/schema";
 
-/** Creates a workspace in the given org. Only callable by org admins (checked via Clerk's session claims). */
+/** Creates a workspace in the given org. Only callable by org admins (verified live against Clerk). */
 export async function createWorkspace(clerkOrgId: string, name: string) {
-  const { orgId: activeClerkOrgId, orgRole } = await auth();
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) {
+    throw new Error("Not signed in");
+  }
 
-  if (activeClerkOrgId !== clerkOrgId || orgRole !== "org:admin") {
+  const clerk = await clerkClient();
+  const membershipList = await clerk.users.getOrganizationMembershipList({ userId: clerkUserId });
+  const membership = membershipList.data.find((m) => m.organization.id === clerkOrgId);
+  if (!membership || membership.role !== "org:admin") {
     throw new Error("Only org admins can create workspaces");
   }
 
@@ -21,5 +27,5 @@ export async function createWorkspace(clerkOrgId: string, name: string) {
 
   await db.insert(workspaces).values({ name, orgId: org.id });
 
-  revalidatePath(`/org/${clerkOrgId}/workspaces`);
+  revalidatePath(`/org/${clerkOrgId}/workspaces/new`);
 }

@@ -32,12 +32,17 @@ export const memberships = pgTable("memberships", {
 });
 
 // Every workspace belongs to an org; all members of that org can access it.
-export const workspaces = pgTable("workspaces", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+// Every org gets a "Default" workspace automatically; admins can create more.
+export const workspaces = pgTable(
+  "workspaces",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    orgId: uuid("org_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.orgId, table.name)],
+);
 
 export const interactions = pgTable("interactions", {
   id: uuid("id").primaryKey().defaultRandom(),

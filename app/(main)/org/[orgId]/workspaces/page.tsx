@@ -41,7 +41,12 @@ export default async function OrgWorkspacesPage({ params }: { params: Promise<{ 
   }
   if (!org) notFound();
 
-  const orgWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
+  let orgWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
+  if (orgWorkspaces.length === 0) {
+    // Every org gets a Default workspace automatically.
+    await db.insert(workspaces).values({ name: "Default", orgId: org.id }).onConflictDoNothing({ target: [workspaces.orgId, workspaces.name] });
+    orgWorkspaces = await db.select().from(workspaces).where(eq(workspaces.orgId, org.id));
+  }
 
   return (
     <div>

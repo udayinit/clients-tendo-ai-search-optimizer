@@ -9,3 +9,4 @@ drizzle
 .vercel
 npm-debug.log*
 *.log
+.env*
